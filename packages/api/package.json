@@ -11,15 +11,19 @@
   },
   "scripts": {},
   "devDependencies": {
-    "typescript": "catalog:",
-    "@my-better-t-app/config": "workspace:*"
+    "@my-better-t-app/config": "workspace:*",
+    "typescript": "catalog:"
   },
   "dependencies": {
-    "@trpc/server": "catalog:",
-    "@trpc/client": "catalog:",
-    "dotenv": "catalog:",
-    "zod": "catalog:",
+    "@google/generative-ai": "^0.24.1",
+    "@my-better-t-app/db": "workspace:*",
     "@my-better-t-app/env": "workspace:*",
-    "@my-better-t-app/db": "workspace:*"
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "cheerio": "^1.1.2",
+    "dotenv": "catalog:",
+    "drizzle-orm": "^0.45.1",
+    "playwright": "^1.57.0",
+    "zod": "catalog:"
   }
 }

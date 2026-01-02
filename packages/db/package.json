@@ -5,9 +5,10 @@
     ".": {
       "default": "./src/index.ts"
     },
-    "./*": {
-      "default": "./src/*.ts"
-    }
+    "./*": [
+      "./src/*.ts",
+      "./src/*/index.ts"
+    ]
   },
   "scripts": {
     "db:local": "turso dev --db-file local.db",

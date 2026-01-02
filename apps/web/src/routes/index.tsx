@@ -1,52 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-
 import { useTRPC } from "@/utils/trpc";
+import { ReportTable } from "@/components/ReportTable";
 
 export const Route = createFileRoute("/")({
-  component: HomeComponent,
+	component: HomeComponent,
 });
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
 function HomeComponent() {
-  const trpc = useTRPC();
-  const healthCheck = useQuery(trpc.healthCheck.queryOptions());
+	const trpc = useTRPC();
 
-  return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="text-muted-foreground text-sm">
-              {healthCheck.isLoading
-                ? "Checking..."
-                : healthCheck.data
-                  ? "Connected"
-                  : "Disconnected"}
-            </span>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
+	const { data: reports = [], isLoading } = useQuery(
+		trpc.reports.getAll.queryOptions(),
+	);
+
+	return (
+		<div className="container mx-auto py-8 px-4">
+			<header className="mb-8 flex items-end justify-between">
+				<div>
+					<h1 className="text-3xl font-bold tracking-tight">Peptide Tracker</h1>
+					<p className="text-muted-foreground">
+						Real-time lab results from Janoshik Analytical.
+					</p>
+				</div>
+				<div className="text-right text-xs text-muted-foreground">
+					{reports.length} reports tracked
+				</div>
+			</header>
+
+			{isLoading ? (
+				<div className="flex h-64 items-center justify-center">
+					<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+				</div>
+			) : (
+				<ReportTable reports={reports} />
+			)}
+		</div>
+	);
 }

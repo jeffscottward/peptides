@@ -1,75 +1,63 @@
-# my-better-t-app
+# Peptides Report Tracker
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Start, Self, TRPC, and more.
+A modern web application to track and manage peptide analysis reports (e.g., from Janoshik). This tool automates the process of extracting data from report images using OCR and visualizing the results.
 
 ## Features
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Start** - SSR framework with TanStack Router
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **shadcn/ui** - Reusable UI components
-- **tRPC** - End-to-end type-safe APIs
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
-- **Husky** - Git hooks for code quality
-- **Turborepo** - Optimized monorepo build system
+- **Automated OCR Processing** - Extract peptide data from report images (PNG/JPG) using Gemini 1.5 Flash.
+- **Interactive Dashboard** - View and filter peptide reports with a clean, responsive UI.
+- **tRPC Integration** - Type-safe communication between frontend and backend.
+- **Drizzle ORM & SQLite** - Robust and fast data storage.
+- **TanStack Start** - Modern SSR framework for high performance.
 
 ## Getting Started
 
-First, install the dependencies:
+### Prerequisites
 
-```bash
-pnpm install
-```
-## Database Setup
+- [pnpm](https://pnpm.io/) (v8 or later)
+- Node.js (v18 or later)
 
-This project uses SQLite with Drizzle ORM.
+### Installation
 
- 1. Start the local SQLite database (optional):
-```bash
-pnpm run db:local
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/jeffscottward/peptides.git
+   cd peptides
+   ```
 
-2. Update your `.env` file in the `apps/web` directory with the appropriate connection details if needed.
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-3. Apply the schema to your database:
-```bash
-pnpm run db:push
-```
+3. Set up environment variables:
+   - Create a `.env` file in `apps/web/` based on `.env.example`.
+   - Add your `GEMINI_API_KEY` and other required credentials.
 
+### Database Setup
 
-Then, run the development server:
+1. Apply the schema to your local SQLite database:
+   ```bash
+   pnpm run db:push
+   ```
+
+### Development
+
+Run the development server:
 
 ```bash
 pnpm run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see your fullstack application.
-
-## Deployment (Cloudflare via Alchemy)
-- Web dev: cd apps/web && pnpm run dev
-- Web deploy: cd apps/web && pnpm run deploy
-- Web destroy: cd apps/web && pnpm run destroy
-
-For more details, see the guide on [Deploying to Cloudflare with Alchemy](https://www.better-t-stack.dev/docs/guides/cloudflare-alchemy).
-
+Open [http://localhost:3001](http://localhost:3001) in your browser.
 
 ## Project Structure
 
-```
-my-better-t-app/
-├── apps/
-│   └── web/         # Fullstack application (React + TanStack Start)
-├── packages/
-│   ├── api/         # API layer / business logic
-│   └── db/          # Database schema & queries
-```
+- `apps/web/` - Fullstack application (TanStack Start + React)
+- `packages/api/` - Shared tRPC routers and business logic
+- `packages/db/` - Database schema and Drizzle configurations
+- `packages/env/` - Shared environment variable validation
 
-## Available Scripts
+## License
 
-- `pnpm run dev`: Start all applications in development mode
-- `pnpm run build`: Build all applications
-- `pnpm run check-types`: Check TypeScript types across all apps
-- `pnpm run db:push`: Push schema changes to database
-- `pnpm run db:studio`: Open database studio UI
-- `pnpm run db:local`: Start the local SQLite database
+MIT
