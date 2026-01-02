@@ -32,8 +32,11 @@
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.0",
 		"@cloudflare/workers-types": "^4.20251213.0",
+		"@libsql/client": "catalog:",
 		"@my-better-t-app/config": "workspace:*",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "catalog:",
+		"better-sqlite3": "^12.5.0",
 		"tsx": "^4.21.0",
 		"turbo": "^2.6.3",
 		"typescript": "catalog:"
