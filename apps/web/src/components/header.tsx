@@ -18,14 +18,9 @@ export default function Header() {
 							</Link>
 						);
 					})}
-					<a
-						href="/api/v1/reports"
-						className="hover:text-primary transition-colors"
-						target="_blank"
-						rel="noreferrer"
-					>
-						API
-					</a>
+					<Link to="/verify" className="hover:text-primary transition-colors">
+						Verify
+					</Link>
 				</nav>
 				<div className="flex items-center gap-2"></div>
 			</div>

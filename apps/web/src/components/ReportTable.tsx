@@ -2,7 +2,11 @@ import {
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
+	ClipboardCheck,
 	ExternalLink,
+	FlaskConical,
+	History,
+	Info,
 	Search,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -26,7 +30,6 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-// Define Report interface locally to avoid workspace import issues
 export interface Report {
 	id: number;
 	janoshikId: string;
@@ -40,6 +43,22 @@ export interface Report {
 	reportImageUrl: string | null;
 	rawOcrData: string | null;
 	createdAt: string | Date;
+
+	// Forensic Data
+	taskNumber?: string | null;
+	verifyKey?: string | null;
+	batchNumber?: string | null;
+	clientName?: string | null;
+	manufacturer?: string | null;
+	madeBy?: string | null;
+	sampleName?: string | null;
+	sampleDescription?: string | null;
+	testsRequested?: string | null;
+	assessmentOf?: string | null;
+	sampleReceivedDate?: string | null;
+	reportDate?: string | null;
+	comments?: string | null;
+	isBlend?: boolean | null;
 }
 
 interface ReportTableProps {
@@ -91,7 +110,6 @@ export function ReportTable({ reports }: ReportTableProps) {
 				bValue = b[sortConfig.key as keyof Report] ?? "";
 			}
 
-			// Handle string comparison
 			if (typeof aValue === "string") aValue = aValue.toLowerCase();
 			if (typeof bValue === "string") bValue = bValue.toLowerCase();
 
@@ -108,7 +126,7 @@ export function ReportTable({ reports }: ReportTableProps) {
 	const filteredReports = useMemo(() => {
 		return sortedReports.filter((report) => {
 			const searchStr =
-				`${report.peptideName} ${report.vendor} ${report.shippingNotes} ${report.janoshikId}`.toLowerCase();
+				`${report.peptideName} ${report.vendor} ${report.manufacturer} ${report.janoshikId}`.toLowerCase();
 			return searchStr.includes(searchTerm.toLowerCase());
 		});
 	}, [sortedReports, searchTerm]);
@@ -130,7 +148,7 @@ export function ReportTable({ reports }: ReportTableProps) {
 				<div className="relative flex-1">
 					<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 					<Input
-						placeholder="Search peptides, vendors, IDs..."
+						placeholder="Search forensics, peptides, vendors..."
 						className="pl-8"
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
@@ -138,70 +156,70 @@ export function ReportTable({ reports }: ReportTableProps) {
 				</div>
 			</div>
 
-			<div className="rounded-md border overflow-hidden">
+			<div className="rounded-md border">
 				<Table className="table-fixed">
 					<TableHeader>
 						<TableRow className="bg-muted/50">
-							<TableHead className="w-[80px]">
+							<TableHead className="w-[80px] pl-4">
 								<Button
 									variant="ghost"
 									size="sm"
-									className="-ml-3 h-8 font-bold"
+									className="-ml-3 h-8 font-bold cursor-pointer"
 									onClick={() => handleSort("janoshikId")}
 								>
 									<span>ID</span>
 									{getSortIcon("janoshikId")}
 								</Button>
 							</TableHead>
-							<TableHead className="w-[120px]">
+							<TableHead className="w-[200px]">
 								<Button
 									variant="ghost"
 									size="sm"
-									className="-ml-3 h-8 font-bold"
+									className="-ml-3 h-8 font-bold cursor-pointer"
 									onClick={() => handleSort("peptideName")}
 								>
 									<span>Peptide</span>
 									{getSortIcon("peptideName")}
 								</Button>
 							</TableHead>
-							<TableHead className="w-[300px] max-w-[300px]">
+							<TableHead className="w-[180px]">
 								<Button
 									variant="ghost"
 									size="sm"
-									className="-ml-3 h-8 font-bold"
+									className="-ml-3 h-8 font-bold cursor-pointer"
 									onClick={() => handleSort("vendor")}
 								>
-									<span>Vendor</span>
+									<span>Vendor / Mfr</span>
 									{getSortIcon("vendor")}
 								</Button>
 							</TableHead>
-							<TableHead className="w-[100px]">
+							<TableHead className="w-[90px]">
 								<Button
 									variant="ghost"
 									size="sm"
-									className="-ml-3 h-8 font-bold"
+									className="-ml-3 h-8 font-bold cursor-pointer"
 									onClick={() => handleSort("purity")}
 								>
 									<span>Purity</span>
 									{getSortIcon("purity")}
 								</Button>
 							</TableHead>
-							<TableHead className="w-[250px] max-w-[250px]">
+							<TableHead className="w-[120px]">
 								<Button
 									variant="ghost"
 									size="sm"
-									className="-ml-3 h-8 font-bold"
+									className="-ml-3 h-8 font-bold cursor-pointer"
 									onClick={() => handleSort("content")}
 								>
 									<span>Content</span>
 									{getSortIcon("content")}
 								</Button>
 							</TableHead>
-							<TableHead className="w-[300px] max-w-[300px]">
+							<TableHead className="w-[400px] pr-4">
 								<Button
 									variant="ghost"
 									size="sm"
-									className="-ml-3 h-8 font-bold"
+									className="-ml-3 h-8 font-bold cursor-pointer"
 									onClick={() => handleSort("shippingNotes")}
 								>
 									<span>Shipping / Notes</span>
@@ -218,29 +236,49 @@ export function ReportTable({ reports }: ReportTableProps) {
 									className="group cursor-pointer hover:bg-muted/50"
 									onClick={() => handleRowClick(report)}
 								>
-									<TableCell className="font-mono text-xs">
+									<TableCell className="font-mono text-xs pl-4">
 										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
 											#{report.janoshikId}
 										</div>
 									</TableCell>
-									<TableCell className="font-medium">
-										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide max-w-[120px]">
-											{report.peptideName}
+									<TableCell>
+										<div className="flex flex-col">
+											<span className="font-bold text-sm truncate">
+												{report.peptideName}
+											</span>
+											<span className="text-[10px] text-muted-foreground truncate">
+												{report.assessmentOf || "Lab Report"}
+											</span>
 										</div>
 									</TableCell>
-									<TableCell className="w-[300px] max-w-[300px]">
-										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide max-w-[300px]">
-											<Badge variant="secondary" className="whitespace-nowrap">
-												{report.vendor}
+									<TableCell>
+										<div className="flex flex-col gap-1">
+											<Badge
+												variant="secondary"
+												className="w-fit text-[10px] py-0 px-1.5"
+											>
+												{report.vendor || "Unknown"}
 											</Badge>
+											{report.manufacturer && (
+												<span className="text-[10px] text-muted-foreground italic px-1 truncate">
+													[{report.manufacturer}]
+												</span>
+											)}
 										</div>
 									</TableCell>
-									<TableCell className="w-[100px] max-w-[100px]">
-										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
-											{report.purity ? (
+									<TableCell>
+										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide flex items-center gap-1">
+											{report.isBlend ? (
+												<Badge
+													variant="outline"
+													className="border-primary text-primary font-bold text-[10px]"
+												>
+													BLEND
+												</Badge>
+											) : report.purity ? (
 												<Badge
 													variant={report.purity >= 99 ? "success" : "default"}
-													className="font-mono"
+													className="font-mono text-[10px]"
 												>
 													{report.purity}%
 												</Badge>
@@ -251,14 +289,14 @@ export function ReportTable({ reports }: ReportTableProps) {
 											)}
 										</div>
 									</TableCell>
-									<TableCell className="w-[250px] max-w-[250px]">
-										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide py-1 text-sm font-semibold max-w-[250px]">
-											{report.actualAmount || report.claimedAmount}
+									<TableCell>
+										<div className="overflow-x-auto whitespace-nowrap scrollbar-hide py-1 text-sm font-black max-w-[120px]">
+											{report.actualAmount || report.claimedAmount || "N/A"}
 										</div>
 									</TableCell>
-									<TableCell className="w-[300px] max-w-[300px]">
+									<TableCell className="w-[400px] pr-4">
 										<div
-											className="overflow-x-auto whitespace-nowrap scrollbar-hide text-xs text-muted-foreground max-w-[300px]"
+											className="overflow-x-auto whitespace-nowrap scrollbar-hide text-xs text-muted-foreground"
 											title={report.shippingNotes || ""}
 										>
 											{report.shippingNotes}
@@ -269,7 +307,7 @@ export function ReportTable({ reports }: ReportTableProps) {
 						) : (
 							<TableRow>
 								<TableCell colSpan={6} className="h-24 text-center">
-									No reports found.
+									No forensic reports found.
 								</TableCell>
 							</TableRow>
 						)}
@@ -280,84 +318,184 @@ export function ReportTable({ reports }: ReportTableProps) {
 			<Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
 				<SheetContent
 					side="right"
-					className="w-[400px] sm:w-[600px] overflow-y-auto"
+					className="w-[350px] sm:w-[450px] overflow-y-auto p-0 gap-0"
+					hideCloseButton
 				>
 					{selectedReport && (
-						<>
-							<SheetHeader>
-								<SheetTitle className="text-2xl">
-									Report #{selectedReport.janoshikId}
-								</SheetTitle>
-								<SheetDescription className="text-lg">
-									{selectedReport.peptideName} tested by {selectedReport.vendor}
-								</SheetDescription>
-							</SheetHeader>
-							<div className="mt-6 space-y-6">
-								<div className="grid grid-cols-2 gap-4">
-									<div className="rounded-lg border p-4 bg-muted/30">
-										<div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
+						<div className="flex flex-col h-full">
+							<div className="p-6 bg-primary text-primary-foreground">
+								<SheetHeader className="text-left">
+									<div className="flex justify-between items-start">
+										<SheetTitle className="text-primary-foreground text-2xl font-black">
+											REPORT #{selectedReport.janoshikId}
+										</SheetTitle>
+										<Badge
+											variant="outline"
+											className="text-primary-foreground border-primary-foreground/30"
+										>
+											{selectedReport.assessmentOf || "Forensic"}
+										</Badge>
+									</div>
+									<SheetDescription className="text-primary-foreground/80 text-lg font-medium leading-tight">
+										{selectedReport.peptideName}
+										<br />
+										<span className="text-sm">
+											Tested for {selectedReport.vendor}
+										</span>
+									</SheetDescription>
+								</SheetHeader>
+
+								<div className="grid grid-cols-2 gap-3 mt-6">
+									<div className="rounded-lg bg-white/10 p-3 backdrop-blur-sm border border-white/10">
+										<div className="text-[10px] uppercase tracking-widest font-bold opacity-70">
 											Purity
 										</div>
-										<div className="text-3xl font-black text-primary">
+										<div className="text-3xl font-black">
 											{selectedReport.purity
 												? `${selectedReport.purity}%`
 												: "N/A"}
 										</div>
 									</div>
-									<div className="rounded-lg border p-4 bg-muted/30">
-										<div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
+									<div className="rounded-lg bg-white/10 p-3 backdrop-blur-sm border border-white/10">
+										<div className="text-[10px] uppercase tracking-widest font-bold opacity-70">
 											Amount Found
 										</div>
-										<div className="text-3xl font-black text-primary">
-											{selectedReport.actualAmount ||
-												selectedReport.claimedAmount}
+										<div className="text-3xl font-black truncate">
+											{selectedReport.isBlend
+												? "BLEND"
+												: selectedReport.actualAmount || "N/A"}
 										</div>
 									</div>
 								</div>
+							</div>
 
-								<div className="space-y-2">
-									<h4 className="font-bold text-sm uppercase tracking-tight text-muted-foreground">
-										Shipping & Notes
-									</h4>
-									<p className="text-base text-foreground bg-muted p-4 rounded-md border">
-										{selectedReport.shippingNotes ||
-											"No extra notes available."}
-									</p>
-								</div>
+							<div className="p-6 space-y-8 flex-1">
+								<section className="space-y-3">
+									<div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tighter">
+										<ClipboardCheck className="h-4 w-4" />
+										<span>Logistics</span>
+									</div>
+									<div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
+										<div>
+											<div className="text-muted-foreground text-[10px] uppercase font-bold">
+												Task #
+											</div>
+											<div className="font-mono font-medium">
+												{selectedReport.taskNumber || selectedReport.janoshikId}
+											</div>
+										</div>
+										<div>
+											<div className="text-muted-foreground text-[10px] uppercase font-bold">
+												Verify Key
+											</div>
+											<div
+												className="font-mono font-medium truncate"
+												title={selectedReport.verifyKey || ""}
+											>
+												{selectedReport.verifyKey || "N/A"}
+											</div>
+										</div>
+										<div>
+											<div className="text-muted-foreground text-[10px] uppercase font-bold">
+												Manufacturer
+											</div>
+											<div className="font-medium">
+												{selectedReport.manufacturer || "N/A"}
+											</div>
+										</div>
+										<div>
+											<div className="text-muted-foreground text-[10px] uppercase font-bold">
+												Batch
+											</div>
+											<div className="font-mono font-medium">
+												{selectedReport.batchNumber || "N/A"}
+											</div>
+										</div>
+									</div>
+								</section>
 
-								<div className="space-y-2">
-									<h4 className="font-bold text-sm uppercase tracking-tight text-muted-foreground">
-										Original Report Image
-									</h4>
+								<section className="space-y-3">
+									<div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tighter">
+										<History className="h-4 w-4" />
+										<span>Timeline & Scope</span>
+									</div>
+									<div className="space-y-3 bg-muted/30 p-3 rounded-lg border border-muted">
+										<div className="flex justify-between items-center text-xs">
+											<div className="flex items-center gap-1.5">
+												<div className="h-2 w-2 rounded-full bg-orange-400" />
+												<span className="text-muted-foreground">Received:</span>
+											</div>
+											<span className="font-bold">
+												{selectedReport.sampleReceivedDate || "Unknown"}
+											</span>
+										</div>
+										<div className="flex justify-between items-center text-xs">
+											<div className="flex items-center gap-1.5">
+												<div className="h-2 w-2 rounded-full bg-green-500" />
+												<span className="text-muted-foreground">Reported:</span>
+											</div>
+											<span className="font-bold">
+												{selectedReport.reportDate || "Unknown"}
+											</span>
+										</div>
+										<div className="pt-2 border-t border-muted-foreground/10">
+											<div className="text-[10px] text-muted-foreground uppercase font-bold mb-1">
+												Tests Requested
+											</div>
+											<div className="text-xs italic leading-tight">
+												{selectedReport.testsRequested || "Standard Analysis"}
+											</div>
+										</div>
+									</div>
+								</section>
+
+								{selectedReport.comments && (
+									<section className="space-y-3">
+										<div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tighter">
+											<Info className="h-4 w-4" />
+											<span>Analyst Comments</span>
+										</div>
+										<div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-lg p-4 text-sm leading-relaxed text-amber-900 dark:text-amber-200">
+											{selectedReport.comments}
+										</div>
+									</section>
+								)}
+
+								<section className="space-y-3">
+									<div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-tighter">
+										<FlaskConical className="h-4 w-4" />
+										<span>Original Report</span>
+									</div>
 									{selectedReport.reportImageUrl ? (
-										<div className="border rounded-md overflow-hidden shadow-lg bg-white">
+										<div className="border-4 border-white shadow-xl rounded-sm overflow-hidden bg-white group relative">
 											<img
 												src={selectedReport.reportImageUrl}
 												alt={`Janoshik Report ${selectedReport.janoshikId}`}
-												className="w-full h-auto"
+												className="w-full h-auto transition-transform group-hover:scale-105 cursor-zoom-in"
 											/>
 										</div>
 									) : (
-										<div className="h-40 flex items-center justify-center border border-dashed rounded-md text-muted-foreground text-sm">
-											Image not available locally.
+										<div className="h-20 flex items-center justify-center border border-dashed rounded-md text-muted-foreground text-xs italic">
+											Lab sheet image not cached locally.
 										</div>
 									)}
-								</div>
+								</section>
+							</div>
 
+							<div className="p-6 pt-0 mt-auto">
 								<a
 									href={`https://www.janoshik.com/tests/${selectedReport.janoshikId}`}
 									target="_blank"
 									rel="noopener noreferrer"
 									className={cn(
 										buttonVariants({ variant: "default", size: "lg" }),
-										"w-full gap-2 text-lg font-bold",
+										"w-full gap-2 text-sm font-black uppercase tracking-widest",
 									)}
 								>
-									View Official Result on Janoshik.com{" "}
-									<ExternalLink className="h-5 w-5" />
+									View Official Result <ExternalLink className="h-4 w-4" />
 								</a>
 							</div>
-						</>
+						</div>
 					)}
 				</SheetContent>
 			</Sheet>

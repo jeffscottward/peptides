@@ -78,16 +78,9 @@ const stats = {
 // ============ API KEY SETUP ============
 const apiKey =
 	process.env.GOOGLE_GENERATIVE_AI_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY;
-log("INIT", "API Key check", {
-	found: !!apiKey,
-	length: apiKey?.length || 0,
-	prefix: apiKey ? apiKey.substring(0, 7) : "N/A",
-});
-
 if (!apiKey) {
 	throw new Error("GOOGLE_GENERATIVE_AI_API_KEY is not set!");
 }
-
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // ============ INTERFACES ============
@@ -97,6 +90,23 @@ export interface ScrapedReport {
 	url: string;
 	testedBy: string;
 	madeBy: string;
+}
+
+interface OCRResult {
+	task_number: string | null;
+	verify_key: string | null;
+	sample_name: string | null;
+	manufacturer: string | null;
+	client_name: string | null;
+	batch_number: string | null;
+	testing_ordered: string | null;
+	sample_received: string | null;
+	report_date: string | null;
+	peptide_name: string | null;
+	purity_percentage: number | null;
+	content_amount: string | null;
+	comments: string | null;
+	is_blend: boolean;
 }
 
 // ============ SCRAPING ============
@@ -139,11 +149,51 @@ export async function scrapePublicTests(): Promise<ScrapedReport[]> {
 	});
 
 	timer.lap("parse");
-	log("SCRAPE", `Found ${scrapedReports.length} reports`, {
-		timing: timer.summary(),
-	});
+	log("SCRAPE", `Found ${scrapedReports.length} reports`);
 
 	return scrapedReports;
+}
+
+// ============ OCR ENGINE ============
+async function performOCR(imageBuffer: Buffer): Promise<OCRResult> {
+	const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+	const prompt = `
+    Analyze this Janoshik Analytical lab report image.
+    Extract the following information into a structured JSON object.
+    If a field is missing or unreadable, return null for that field.
+
+    Fields to extract:
+    - task_number: The "Task #" value (e.g., 95031)
+    - verify_key: The "Verify key" value
+    - sample_name: The "Sample" name listed in the header
+    - manufacturer: The "Manufacturer" value
+    - client_name: The "Client" value
+    - batch_number: The "Batch" value
+    - testing_ordered: The "Testing ordered" value
+    - sample_received: The "Sample received" date
+    - report_date: The "Report date" (usually at the top right or bottom)
+    - peptide_name: The substance name identified in the results section
+    - purity_percentage: The numeric purity percentage (e.g., 99.54)
+    - content_amount: The amount found (e.g., "10.24 mg" or "24.38 iu")
+    - comments: The full text of the "Comments" or analyst notes at the bottom
+    - is_blend: Boolean. Set to true if the report mentions multiple substances, a mixture, or explicitly says "blend".
+
+    Return ONLY the JSON.
+  `;
+
+	const result = await model.generateContent([
+		prompt,
+		{
+			inlineData: {
+				data: imageBuffer.toString("base64"),
+				mimeType: "image/png",
+			},
+		},
+	]);
+
+	const responseText = result.response.text();
+	const cleanJson = responseText.replace(/```json|```/g, "").trim();
+	return JSON.parse(cleanJson);
 }
 
 // ============ SINGLE REPORT PROCESSING ============
@@ -151,115 +201,86 @@ export async function processReport(scraped: ScrapedReport): Promise<boolean> {
 	const timer = new Timer();
 	log("PROCESS", `Starting report #${scraped.janoshikId}`);
 
-	const browser = await chromium.launch();
-	timer.lap("browser-launch");
+	const reportsDir = path.join(process.cwd(), "apps/web/public/reports");
+	if (!fs.existsSync(reportsDir)) {
+		fs.mkdirSync(reportsDir, { recursive: true });
+	}
 
-	const page = await browser.newPage();
+	// 1. Check for local image
+	const localFiles = fs.readdirSync(reportsDir);
+	const localFileMatch = localFiles.find((f) =>
+		f.startsWith(`${scraped.janoshikId}_`),
+	);
+	let imageBuffer: Buffer | null = null;
+	let fileName = "";
+
+	if (localFileMatch) {
+		log("PROCESS", `Using local image: ${localFileMatch}`);
+		imageBuffer = fs.readFileSync(path.join(reportsDir, localFileMatch));
+		fileName = localFileMatch;
+		timer.lap("local-read");
+	} else {
+		// 2. Fetch via Playwright if not local
+		log("PROCESS", "Local image not found. Starting browser fetch...");
+		const browser = await chromium.launch();
+		timer.lap("browser-launch");
+		const page = await browser.newPage();
+
+		try {
+			await page.goto(scraped.url, { timeout: 30000 });
+			timer.lap("navigate");
+
+			const downloadLink = await page.getAttribute(
+				"#main > div > ul > ul > li:nth-child(1) > a",
+				"href",
+			);
+
+			if (downloadLink) {
+				const imageUrl = new URL(downloadLink, scraped.url).toString();
+				const imageResponse = await fetch(imageUrl);
+				if (imageResponse.ok) {
+					const buffer = await imageResponse.arrayBuffer();
+					imageBuffer = Buffer.from(buffer);
+					timer.lap("download-image");
+
+					fileName = `${scraped.janoshikId}_${scraped.title.replace(/[^a-z0-9]/gi, "_").substring(0, 50)}.png`;
+					fs.writeFileSync(path.join(reportsDir, fileName), imageBuffer);
+					timer.lap("save-file");
+				}
+			}
+		} catch (err) {
+			logError("PROCESS", "Browser fetch failed", err);
+		} finally {
+			await browser.close();
+		}
+	}
+
+	if (!imageBuffer) {
+		logError(
+			"PROCESS",
+			"No image source available",
+			"Failed to find local or fetch remote",
+		);
+		stats.failed++;
+		return false;
+	}
 
 	try {
-		// Navigate to report page
-		log("PROCESS", `Navigating to ${scraped.url}`);
-		await page.goto(scraped.url, { timeout: 30000 });
-		timer.lap("navigate");
-
-		// Find download link
-		log("PROCESS", "Looking for download link...");
-		const downloadLink = await page.getAttribute(
-			"#main > div > ul > ul > li:nth-child(1) > a",
-			"href",
-		);
-
-		if (!downloadLink) {
-			logError(
-				"PROCESS",
-				`No download link found for #${scraped.janoshikId}`,
-				"Missing selector",
-			);
-			stats.skipped++;
-			return false;
-		}
-		timer.lap("find-link");
-
-		// Download image
-		const imageUrl = new URL(downloadLink, scraped.url).toString();
-		log("PROCESS", `Downloading image from ${imageUrl}`);
-
-		const imageResponse = await fetch(imageUrl);
-		if (!imageResponse.ok) {
-			logError(
-				"PROCESS",
-				`Failed to download image`,
-				`HTTP ${imageResponse.status}`,
-			);
-			stats.failed++;
-			return false;
-		}
-
-		const buffer = await imageResponse.arrayBuffer();
-		const imageBuffer = Buffer.from(buffer);
-		timer.lap("download-image");
-		log("PROCESS", `Downloaded image`, {
-			size: `${Math.round(imageBuffer.length / 1024)}KB`,
-		});
-
-		// Save locally
-		const reportsDir = path.join(process.cwd(), "apps/web/public/reports");
-		if (!fs.existsSync(reportsDir)) {
-			fs.mkdirSync(reportsDir, { recursive: true });
-		}
-
-		const fileName = `${scraped.janoshikId}_${scraped.title.replace(/[^a-z0-9]/gi, "_").substring(0, 50)}.png`;
-		const filePath = path.join(reportsDir, fileName);
-		fs.writeFileSync(filePath, imageBuffer);
-		timer.lap("save-file");
-		log("PROCESS", `Saved to ${fileName}`);
-
-		// OCR with Gemini
-		log("PROCESS", "Sending to Gemini for OCR...");
-		const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-		const prompt = `
-      Analyze this lab test report from Janoshik Analytical.
-      Extract the following data in JSON format:
-      - peptide_name: The name of the substance being tested.
-      - purity_percentage: The purity percentage found (as a number, e.g. 99.5).
-      - content_amount: The amount of substance found per vial (e.g. "12.5 mg").
-      - test_date: The date of the report.
-      - verification_code: The verification code if present.
-      
-      Return ONLY the JSON.
-    `;
-
-		const result = await model.generateContent([
-			prompt,
-			{
-				inlineData: {
-					data: imageBuffer.toString("base64"),
-					mimeType: "image/png",
-				},
-			},
-		]);
+		// 3. OCR
+		log("PROCESS", "Sending to Gemini for Forensic OCR...");
+		const ocrData = await performOCR(imageBuffer);
 		timer.lap("gemini-ocr");
 
-		const ocrText = result.response.text();
-		log("PROCESS", "Gemini response received", { length: ocrText.length });
-
-		const ocrData = JSON.parse(ocrText.replace(/```json|```/g, "").trim());
-		log("PROCESS", "OCR data parsed", {
-			peptide: ocrData.peptide_name,
-			purity: ocrData.purity_percentage,
-		});
-
-		// Parse title for shipping notes
+		// 4. Enrichment & Formatting
 		const titleParts = scraped.title.split("|");
-		const peptidePart = titleParts[0]
-			.replace(`#${scraped.janoshikId}`, "")
-			.trim();
+		const peptidePart =
+			titleParts[0]?.replace(`#${scraped.janoshikId}`, "").trim() || "";
 		const shippingNotes = titleParts
 			.slice(1)
 			.map((p) => p.trim())
 			.join(" | ");
 
-		// Save to DB
+		// 5. Database Save
 		log("PROCESS", "Saving to database...");
 		await db.insert(reports).values({
 			janoshikId: scraped.janoshikId,
@@ -267,70 +288,72 @@ export async function processReport(scraped: ScrapedReport): Promise<boolean> {
 			vendor: scraped.testedBy,
 			shippingNotes: shippingNotes,
 			peptideName: ocrData.peptide_name || peptidePart,
-			claimedAmount: peptidePart.match(/\d+mg/i)?.[0] || "",
+			claimedAmount: peptidePart.match(/\d+(mg|iu)/i)?.[0] || null,
 			actualAmount: ocrData.content_amount,
 			purity: ocrData.purity_percentage,
 			reportImageUrl: `/reports/${fileName}`,
 			rawOcrData: JSON.stringify(ocrData),
+
+			// Forensic Data
+			taskNumber: ocrData.task_number,
+			verifyKey: ocrData.verify_key,
+			batchNumber: ocrData.batch_number,
+			clientName: ocrData.client_name,
+			manufacturer: ocrData.manufacturer,
+			madeBy: scraped.madeBy,
+
+			// Context
+			sampleName: ocrData.sample_name,
+			testsRequested: ocrData.testing_ordered,
+			assessmentOf: scraped.title.includes("Assessment")
+				? "Assessment"
+				: "Qualitative & Quantitative",
+
+			// Timeline
+			sampleReceivedDate: ocrData.sample_received,
+			reportDate: ocrData.report_date,
+
+			// Intelligence
+			comments: ocrData.comments,
+			isBlend: ocrData.is_blend,
 		});
 		timer.lap("db-insert");
 
-		const totalTime = timer.total();
-		stats.times.push(totalTime);
+		stats.times.push(timer.total());
 		stats.processed++;
-
 		log("PROCESS", `SUCCESS #${scraped.janoshikId}`, {
-			totalTime: `${totalTime}ms`,
+			total: `${timer.total()}ms`,
 			breakdown: timer.summary(),
 		});
-
 		return true;
 	} catch (error) {
+		logError("PROCESS", `OCR/DB Error for #${scraped.janoshikId}`, error);
 		stats.failed++;
-		logError("PROCESS", `FAILED #${scraped.janoshikId}`, error);
 		return false;
-	} finally {
-		await browser.close();
 	}
 }
 
 // ============ BATCH SYNC ============
 export async function syncReports(limit?: number) {
 	const syncTimer = new Timer();
+	log("SYNC", "========== FORENSIC SYNC STARTED ==========");
 
-	log("SYNC", "========== SYNC STARTED ==========");
-	log("SYNC", `Limit: ${limit || "none (all reports)"}`);
-
-	// Get existing reports
-	log("SYNC", "Checking database for existing reports...");
-	const existingReports = await db
-		.select({ janoshikId: reports.janoshikId })
-		.from(reports);
-	const existingIds = new Set(existingReports.map((r) => r.janoshikId));
-	log("SYNC", `Found ${existingIds.size} existing reports in database`);
-
-	// Scrape new reports
 	const scrapedList = await scrapePublicTests();
-	const newReports = scrapedList.filter((r) => !existingIds.has(r.janoshikId));
 
-	// Apply limit
-	const toProcess = limit ? newReports.slice(0, limit) : newReports;
+	const existingReports = await db
+		.select({ id: reports.janoshikId })
+		.from(reports);
+	const existingIds = new Set(existingReports.map((r) => r.id));
+	const toProcess = scrapedList
+		.filter((r) => !existingIds.has(r.janoshikId))
+		.slice(0, limit || scrapedList.length);
 
-	log("SYNC", "Processing plan", {
-		totalOnJanoshik: scrapedList.length,
-		newReports: newReports.length,
-		toProcess: toProcess.length,
-		limit: limit || "none",
-	});
+	log("SYNC", `Planning to process ${toProcess.length} reports`);
 
-	if (toProcess.length === 0) {
-		log("SYNC", "No new reports to process!");
-		return;
-	}
-
-	// Process each report
 	for (let i = 0; i < toProcess.length; i++) {
 		const report = toProcess[i];
+		if (!report) continue;
+
 		const remaining = toProcess.length - i - 1;
 
 		log("SYNC", `========== [${i + 1}/${toProcess.length}] ==========`);
@@ -342,21 +365,21 @@ export async function syncReports(limit?: number) {
 
 		await processReport(report);
 
-		// Rate limit delay (except for last item)
-		if (i < toProcess.length - 1) {
-			log("SYNC", "Rate limit delay: 2 seconds...");
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+		// If it's NOT a local file, we should delay to be polite to Janoshik
+		const reportsDir = path.join(process.cwd(), "apps/web/public/reports");
+		const localFile = fs
+			.readdirSync(reportsDir)
+			.find((f) => f.startsWith(report.janoshikId));
+
+		if (!localFile && i < toProcess.length - 1) {
+			log("SYNC", "Rate limit delay (Remote): 2 seconds...");
+			await new Promise((r) => setTimeout(r, 2000));
 		}
 	}
 
-	// Final summary
-	const totalTime = syncTimer.total();
-	log("SYNC", "========== SYNC COMPLETE ==========");
-	log("SYNC", "Final stats", {
+	log("SYNC", "========== SYNC COMPLETE ==========", {
+		total: `${Math.round(syncTimer.total() / 1000)}s`,
 		processed: stats.processed,
 		failed: stats.failed,
-		skipped: stats.skipped,
-		totalTime: `${Math.round(totalTime / 1000)}s`,
-		avgPerReport: `${stats.avgTime()}ms`,
 	});
 }
