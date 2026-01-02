@@ -87,6 +87,9 @@ importers:
       '@my-better-t-app/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@my-better-t-app/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@my-better-t-app/env':
         specifier: workspace:*
         version: link:../../packages/env
@@ -177,7 +180,7 @@ importers:
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: ^1.17.1
-        version: 1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251217.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))
+        version: 1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))
       '@my-better-t-app/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -204,7 +207,7 @@ importers:
         version: 5.1.2(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       alchemy:
         specifier: 'catalog:'
-        version: 0.82.2(@cloudflare/vite-plugin@1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251217.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0)))(@libsql/client@0.15.15)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251217.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))
+        version: 0.82.2(@cloudflare/vite-plugin@1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0)))(@libsql/client@0.15.15)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))
       jsdom:
         specifier: ^26.0.0
         version: 26.1.0
@@ -330,7 +333,7 @@ importers:
         version: link:../config
       alchemy:
         specifier: 'catalog:'
-        version: 0.82.2(@cloudflare/vite-plugin@1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0)))(@libsql/client@0.15.15)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))
+        version: 0.82.2(@cloudflare/vite-plugin@1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251217.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0)))(@libsql/client@0.15.15)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251217.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -5645,6 +5648,7 @@ snapshots:
       unenv: 2.0.0-rc.24
     optionalDependencies:
       workerd: 1.20251217.0
+    optional: true
 
   '@cloudflare/unenv-preset@2.7.7(unenv@2.0.0-rc.21)(workerd@1.20251210.0)':
     dependencies:
@@ -5675,7 +5679,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
       - workerd
-    optional: true
 
   '@cloudflare/vite-plugin@1.17.1(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))(workerd@1.20251217.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20260101.0))':
     dependencies:
@@ -5694,6 +5697,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
       - workerd
+    optional: true
 
   '@cloudflare/workerd-darwin-64@1.20251210.0':
     optional: true

@@ -49,6 +49,10 @@ coverage
 tmp
 temp
 .sessions/
+apps/web/public/reports/*.png
+*.db
+*.db-shm
+*.db-wal
 
 # START Ruler Generated Files
 /AGENTS.md

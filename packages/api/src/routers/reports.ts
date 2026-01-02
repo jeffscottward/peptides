@@ -1,7 +1,7 @@
-import { router, publicProcedure } from "../index";
+import { desc } from "drizzle-orm";
 import { db } from "../../../db/src/index";
 import { reports } from "../../../db/src/schema/reports";
-import { desc } from "drizzle-orm";
+import { publicProcedure, router } from "../index";
 
 export const reportsRouter = router({
 	getAll: publicProcedure.query(async () => {

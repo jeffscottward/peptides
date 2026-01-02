@@ -1,10 +1,10 @@
-import { chromium } from "playwright";
-import * as cheerio from "cheerio";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { db } from "../../../db/src/index";
-import { reports } from "../../../db/src/schema/reports";
 import fs from "node:fs";
 import path from "node:path";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import * as cheerio from "cheerio";
+import { chromium } from "playwright";
+import { db } from "../../../db/src/index";
+import { reports } from "../../../db/src/schema/reports";
 import { env } from "../../../env/src/server";
 
 // ============ LOGGING UTILITIES ============
