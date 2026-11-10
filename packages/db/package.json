@@ -16,11 +16,11 @@
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio",
 		"db:migrate": "drizzle-kit migrate",
-		"check-types": "tsc --noEmit"
+		"check-types": "tsrs --noEmit"
 	},
 	"devDependencies": {
 		"drizzle-kit": "^0.31.8",
-		"typescript": "catalog:",
+		"tsrs": "^0.23.0-ts7.1.0-beta",
 		"@my-better-t-app/config": "workspace:*"
 	},
 	"dependencies": {
