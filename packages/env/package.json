@@ -8,7 +8,7 @@
 		"./web": "./src/web.ts"
 	},
 	"scripts": {
-		"check-types": "tsc --noEmit"
+		"check-types": "tsrs --noEmit"
 	},
 	"dependencies": {
 		"zod": "catalog:",
@@ -16,7 +16,7 @@
 		"dotenv": "catalog:"
 	},
 	"devDependencies": {
-		"typescript": "catalog:",
+		"tsrs": "^0.23.0-ts7.1.0-beta",
 		"@types/node": "catalog:",
 		"@my-better-t-app/config": "workspace:*",
 		"@my-better-t-app/infra": "workspace:*"

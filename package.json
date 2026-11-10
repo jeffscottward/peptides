@@ -11,7 +11,7 @@
 		"ruler:apply": "pnpm dlx @intellectronica/ruler@latest apply --local-only",
 		"dev": "turbo dev",
 		"build": "turbo build",
-		"check-types": "turbo check-types && tsc --noEmit -p .",
+		"check-types": "turbo check-types && tsrs --noEmit -p .",
 		"dev:native": "turbo -F native dev",
 		"dev:web": "turbo -F web dev",
 		"db:push": "turbo -F @my-better-t-app/db db:push",
@@ -39,7 +39,7 @@
 		"better-sqlite3": "^12.5.0",
 		"tsx": "^4.21.0",
 		"turbo": "^2.6.3",
-		"typescript": "catalog:"
+		"tsrs": "^0.23.0-ts7.1.0-beta"
 	},
 	"packageManager": "pnpm@10.12.4"
 }
