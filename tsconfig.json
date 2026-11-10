@@ -1,3 +1,4 @@
 {
-	"extends": "@my-better-t-app/config/tsconfig.base.json"
+	"extends": "@my-better-t-app/config/tsconfig.base.json",
+	"include": ["scripts/**/*.ts"]
 }

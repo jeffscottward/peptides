@@ -1,6 +1,6 @@
+import { db } from "@my-better-t-app/db";
+import { reports } from "@my-better-t-app/db/schema/reports";
 import { desc } from "drizzle-orm";
-import { db } from "../../../db/src/index";
-import { reports } from "../../../db/src/schema/reports";
 import { publicProcedure, router } from "../index";
 
 export const reportsRouter = router({

@@ -61,6 +61,28 @@ export interface Report {
 	isBlend?: boolean | null;
 }
 
+type SortValue = string | number;
+
+function toSortValue(report: Report, key: keyof Report | "content"): SortValue {
+	const raw =
+		key === "content"
+			? report.actualAmount || report.claimedAmount || ""
+			: (report[key] ?? "");
+	if (raw instanceof Date) return raw.getTime();
+	if (typeof raw === "boolean") return raw ? 1 : 0;
+	if (typeof raw === "string") return raw.toLowerCase();
+	return raw;
+}
+
+function compareSortValues(a: SortValue, b: SortValue): number {
+	if (typeof a === "number" && typeof b === "number") return a - b;
+	const left = String(a);
+	const right = String(b);
+	if (left < right) return -1;
+	if (left > right) return 1;
+	return 0;
+}
+
 interface ReportTableProps {
 	reports: Report[];
 }
@@ -99,27 +121,11 @@ export function ReportTable({ reports }: ReportTableProps) {
 		if (sortConfig.direction === null) return items;
 
 		return items.sort((a, b) => {
-			let aValue: any;
-			let bValue: any;
-
-			if (sortConfig.key === "content") {
-				aValue = a.actualAmount || a.claimedAmount || "";
-				bValue = b.actualAmount || b.claimedAmount || "";
-			} else {
-				aValue = a[sortConfig.key as keyof Report] ?? "";
-				bValue = b[sortConfig.key as keyof Report] ?? "";
-			}
-
-			if (typeof aValue === "string") aValue = aValue.toLowerCase();
-			if (typeof bValue === "string") bValue = bValue.toLowerCase();
-
-			if (aValue < bValue) {
-				return sortConfig.direction === "asc" ? -1 : 1;
-			}
-			if (aValue > bValue) {
-				return sortConfig.direction === "asc" ? 1 : -1;
-			}
-			return 0;
+			const order = compareSortValues(
+				toSortValue(a, sortConfig.key),
+				toSortValue(b, sortConfig.key),
+			);
+			return sortConfig.direction === "asc" ? order : -order;
 		});
 	}, [reports, sortConfig]);
 
