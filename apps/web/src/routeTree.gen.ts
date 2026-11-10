@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiV1ReportsRouteImport } from './routes/api/v1/reports'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api/trpc/$'
 
 const VerifyRoute = VerifyRouteImport.update({
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1ReportsRoute = ApiV1ReportsRouteImport.update({
+  id: '/api/v1/reports',
+  path: '/api/v1/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   id: '/api/trpc/$',
   path: '/api/trpc/$',
@@ -33,30 +39,34 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/verify': typeof VerifyRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/v1/reports': typeof ApiV1ReportsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/verify': typeof VerifyRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/v1/reports': typeof ApiV1ReportsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/verify': typeof VerifyRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/api/v1/reports': typeof ApiV1ReportsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/verify' | '/api/trpc/$'
+  fullPaths: '/' | '/verify' | '/api/trpc/$' | '/api/v1/reports'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/verify' | '/api/trpc/$'
-  id: '__root__' | '/' | '/verify' | '/api/trpc/$'
+  to: '/' | '/verify' | '/api/trpc/$' | '/api/v1/reports'
+  id: '__root__' | '/' | '/verify' | '/api/trpc/$' | '/api/v1/reports'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   VerifyRoute: typeof VerifyRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
+  ApiV1ReportsRoute: typeof ApiV1ReportsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/reports': {
+      id: '/api/v1/reports'
+      path: '/api/v1/reports'
+      fullPath: '/api/v1/reports'
+      preLoaderRoute: typeof ApiV1ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/trpc/$': {
       id: '/api/trpc/$'
       path: '/api/trpc/$'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   VerifyRoute: VerifyRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
+  ApiV1ReportsRoute: ApiV1ReportsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

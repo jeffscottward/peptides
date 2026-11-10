@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { db } from "@my-better-t-app/db";
+import { reports } from "@my-better-t-app/db/schema/reports";
+import { env } from "@my-better-t-app/env/server";
 import * as cheerio from "cheerio";
 import { chromium } from "playwright";
-import { db } from "../../../db/src/index";
-import { reports } from "../../../db/src/schema/reports";
-import { env } from "../../../env/src/server";
 
 // ============ LOGGING UTILITIES ============
 function timestamp(): string {

@@ -11,7 +11,7 @@
 		"ruler:apply": "pnpm dlx @intellectronica/ruler@latest apply --local-only",
 		"dev": "turbo dev",
 		"build": "turbo build",
-		"check-types": "turbo check-types",
+		"check-types": "turbo check-types && tsc --noEmit -p .",
 		"dev:native": "turbo -F native dev",
 		"dev:web": "turbo -F web dev",
 		"db:push": "turbo -F @my-better-t-app/db db:push",

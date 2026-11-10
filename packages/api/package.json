@@ -9,7 +9,9 @@
 			"default": "./src/*.ts"
 		}
 	},
-	"scripts": {},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
 	"devDependencies": {
 		"@my-better-t-app/config": "workspace:*",
 		"typescript": "catalog:"
